@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LightHouse — Controle de Ambientes</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" th:href="@{/style.css(v=8)}" />
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <div class="logo-text">LIGHT<span>HOUSE</span></div>
+        </div>
+
+        <div class="header-right">
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                SISTEMA ONLINE
+            </div>
+        </div>
+    </header>
+
+    <main>
+
+        <section class="dashboard-section" id="section-rain">
+            <div class="section-header">
+                <div class="section-title">Área externa</div>
+                <div class="section-count">Clima <span>&amp; portão</span></div>
+            </div>
+            <div class="exterior-panel" id="exterior-panel">
+                <div class="exterior-slot" id="rain-slot">
+                    <div class="loading">carregando sensor...</div>
+                </div>
+                <div class="exterior-slot" id="gate-slot">
+                    <div class="loading">carregando portão...</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard-section" id="section-lights">
+            <div class="section-header row-header">
+                <div>
+                    <div class="section-title">Iluminação</div>
+                    <div class="section-count">Luzes <span>dos ambientes</span></div>
+                </div>
+                <div class="section-actions">
+                    <button class="all-toggle on" onclick="allLightsOn()">LIGAR TUDO</button>
+                    <button class="all-toggle off" onclick="allLightsOff()">APAGAR TUDO</button>
+                </div>
+            </div>
+            <div class="stats-bar">
+                <div class="stat-block lit">
+                    <div class="stat-label">iluminados</div>
+                    <div class="stat-value" id="count-on">0</div>
+                </div>
+                <div class="stat-block dark">
+                    <div class="stat-label">apagados</div>
+                    <div class="stat-value" id="count-off">0</div>
+                </div>
+                <div class="stat-block total">
+                    <div class="stat-label">ambientes</div>
+                    <div class="stat-value" id="count-total">0</div>
+                </div>
+            </div>
+            <div class="rooms-grid" id="rooms-grid">
+                <div class="loading">carregando luzes...</div>
+            </div>
+        </section>
+
+        <section class="dashboard-section" id="section-windows">
+            <div class="section-header row-header">
+                <div>
+                    <div class="section-title">Aberturas</div>
+                    <div class="section-count">Janelas <span>dos ambientes</span></div>
+                </div>
+                <div class="section-actions">
+                    <button class="all-toggle on window-action" id="btn-open-all-windows" onclick="allWindowsOpen()">ABRIR TUDO</button>
+                    <button class="all-toggle off window-action" onclick="allWindowsClosed()">FECHAR TUDO</button>
+                </div>
+            </div>
+            <p class="windows-block-banner" id="windows-block-banner" hidden>
+                Chuva detectada — abertura de janelas bloqueada
+            </p>
+            <div class="stats-bar">
+                <div class="stat-block lit window-stat">
+                    <div class="stat-label">abertas</div>
+                    <div class="stat-value" id="count-open">0</div>
+                </div>
+                <div class="stat-block dark">
+                    <div class="stat-label">fechadas</div>
+                    <div class="stat-value" id="count-closed">0</div>
+                </div>
+                <div class="stat-block total">
+                    <div class="stat-label">janelas</div>
+                    <div class="stat-value" id="count-windows">0</div>
+                </div>
+            </div>
+            <div class="rooms-grid" id="windows-grid">
+                <div class="loading">carregando janelas...</div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="toast"></div>
+
+    <script>
+        const API_LIGHTS = '/api/quartos';
+        const API_WINDOWS = '/api/janelas';
+        const API_RAIN = '/api/chuva';
+        const API_GATE = '/api/portao';
+
+        let rooms = [];
+        let windows = [];
+        let windowsBlocked = false;
+        let rain = { rain: 'no', status: 'sem chuva' };
+        let gate = { gate: 'entrada', state: 'closed', status: 'fechado' };
+        let lastRoomsKey = '';
+        let lastWindowsKey = '';
+        let lastRainKey = '';
+        let lastGateKey = '';
+        let windowsLoadSeq = 0;
+
+        function isRaining() {
+            return rain.rain === 'yes';
+        }
+
+        function setText(el, value) {
+            const text = value ?? '—';
+            if (el && el.textContent !== text) el.textContent = text;
+        }
+
+        function addCardClasses(el, classes) {
+            (classes || '').split(/\s+/).filter(Boolean).forEach(c => el.classList.add(c));
+        }
+
+        async function loadRain() {
+            try {
+                const res = await fetch(API_RAIN);
+                const data = await res.json();
+                const key = JSON.stringify(data);
+                const rainChanged = key !== lastRainKey;
+                if (!rainChanged) return;
+                lastRainKey = key;
+                rain = data;
+                renderRain();
+                updateWindowsBlockUi();
+                if (rainChanged) {
+                    lastWindowsKey = '';
+                    await loadWindows();
+                } else if (isRaining() && windows.some(w => w.state === 'open')) {
+                    lastWindowsKey = '';
+                    await loadWindows();
+                }
+            } catch {
+                lastRainKey = '';
+                document.getElementById('rain-slot').innerHTML =
+                    '<div class="loading">erro ao ler sensor de chuva</div>';
+            }
+        }
+
+        async function loadGate() {
+            try {
+                const res = await fetch(API_GATE);
+                const data = await res.json();
+                const key = JSON.stringify(data);
+                if (key === lastGateKey) return;
+                lastGateKey = key;
+                gate = data;
+                renderGate();
+            } catch {
+                lastGateKey = '';
+                document.getElementById('gate-slot').innerHTML =
+                    '<div class="loading">erro ao conectar com o portão</div>';
+            }
+        }
+
+        function renderRain() {
+            const raining = isRaining();
+            const slot = document.getElementById('rain-slot');
+            slot.querySelector('.loading')?.remove();
+
+            let card = slot.querySelector('.rain-card');
+            if (card && !card.querySelector('.rain-footer')) {
+                card.remove();
+                card = null;
+            }
+            const isNew = !card;
+
+            if (!card) {
+                card = document.createElement('div');
+                card.classList.add('rain-card', 'room-card', 'off', 'card-enter');
+                card.innerHTML = `
+                    <div class="card-glow"></div>
+                    <div class="card-top">
+                        <div class="room-icon rain-icon"></div>
+                        <div class="room-status-badge"></div>
+                    </div>
+                    <div class="room-name">Sensor de chuva</div>
+                    <div class="room-detail"></div>
+                    <div class="card-footer rain-footer">
+                        <span class="toggle-label">ESP32 · somente leitura</span>
+                        <div class="toggle-readonly" aria-hidden="true"></div>
+                    </div>`;
+                slot.appendChild(card);
+            }
+
+            if (isNew || card.classList.contains('raining') !== raining) {
+                card.classList.toggle('raining', raining);
+                card.classList.toggle('dry', !raining);
+            }
+
+            setText(card.querySelector('.room-icon.rain-icon'), raining ? '🌧' : '☀');
+            setText(card.querySelector('.room-status-badge'), raining ? 'CHOVENDO' : 'SECO');
+            setText(card.querySelector('.room-detail'), rain.status || '—');
+        }
+
+        function renderGate() {
+            const open = gate.state === 'open';
+            const slot = document.getElementById('gate-slot');
+            slot.querySelector('.loading')?.remove();
+
+            let card = slot.querySelector('.gate-card');
+            const isNew = !card;
+
+            if (!card) {
+                card = document.createElement('div');
+                card.classList.add('gate-card', 'room-card', open ? 'on' : 'off', 'card-enter');
+                card.innerHTML = `
+                    <div class="card-glow"></div>
+                    <div class="card-top">
+                        <div class="room-icon gate-icon"></div>
+                        <div class="room-status-badge"></div>
+                    </div>
+                    <div class="room-name">Portão</div>
+                    <div class="room-detail"></div>
+                    <div class="card-footer">
+                        <span class="toggle-label"></span>
+                        <div class="toggle-switch"></div>
+                    </div>`;
+                card.addEventListener('click', (e) => toggleGate(e));
+                slot.appendChild(card);
+            }
+
+            const active = card.classList.contains('on');
+            if (active !== open) {
+                card.classList.toggle('on', open);
+                card.classList.toggle('off', !open);
+            }
+            setText(card.querySelector('.gate-icon'), open ? '🚧' : '🔒');
+            setText(card.querySelector('.room-status-badge'), open ? 'ABERTO' : 'FECHADO');
+            setText(card.querySelector('.room-detail'), gate.status || '—');
+            setText(card.querySelector('.toggle-label'), open ? 'Aberto' : 'Fechado');
+            const toggle = card.querySelector('.toggle-switch');
+            if (toggle.classList.contains('active') !== open) {
+                toggle.classList.toggle('active', open);
+            }
+        }
+
+        async function toggleGate(event) {
+            if (event) event.stopPropagation();
+            try {
+                const res = await fetch(`${API_GATE}/toggle`, { method: 'POST' });
+                if (!res.ok) throw new Error();
+                lastGateKey = '';
+                await loadGate();
+                showToast('Portão atualizado');
+            } catch {
+                showToast('Erro ao atualizar portão');
+                lastGateKey = '';
+                loadGate();
+            }
+        }
+
+        function updateWindowsBlockUi() {
+            const blocked = windowsBlocked || isRaining();
+            document.getElementById('windows-block-banner').hidden = !blocked;
+            const btnOpenAll = document.getElementById('btn-open-all-windows');
+            btnOpenAll.disabled = blocked;
+            btnOpenAll.classList.toggle('disabled', blocked);
+            document.getElementById('windows-grid')?.classList.toggle('windows-locked', blocked);
+        }
+
+        async function loadRooms() {
+            try {
+                const res = await fetch(API_LIGHTS);
+                const data = await res.json();
+                const list = data.rooms || [];
+                const key = JSON.stringify(list);
+                if (key === lastRoomsKey) return;
+                lastRoomsKey = key;
+                rooms = list;
+                renderRooms();
+            } catch {
+                lastRoomsKey = '';
+                document.getElementById('rooms-grid').innerHTML =
+                    '<div class="loading">erro ao conectar com a API de luzes</div>';
+            }
+        }
+
+        async function loadWindows() {
+            const seq = ++windowsLoadSeq;
+            const grid = document.getElementById('windows-grid');
+            try {
+                const res = await fetch(API_WINDOWS);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                const data = await res.json();
+                if (seq !== windowsLoadSeq) return;
+
+                const list = Array.isArray(data.windows) ? data.windows : [];
+                windowsBlocked = data.windowsBlocked === true;
+                windows = list;
+                lastWindowsKey = JSON.stringify({ list, windowsBlocked });
+
+                renderWindows();
+                updateWindowsBlockUi();
+            } catch (err) {
+                if (seq !== windowsLoadSeq) return;
+                console.error('loadWindows:', err);
+                lastWindowsKey = '';
+                if (grid) {
+                    grid.innerHTML =
+                        '<div class="loading">erro ao carregar janelas — recarregue a página</div>';
+                }
+            }
+        }
+
+        function updateLightStats() {
+            const on = rooms.filter(r => r.light === 'on').length;
+            document.getElementById('count-on').textContent = on;
+            document.getElementById('count-off').textContent = rooms.length - on;
+            document.getElementById('count-total').textContent = rooms.length;
+        }
+
+        function updateWindowStats() {
+            const open = windows.filter(w => w.state === 'open').length;
+            document.getElementById('count-open').textContent = open;
+            document.getElementById('count-closed').textContent = windows.length - open;
+            document.getElementById('count-windows').textContent = windows.length;
+        }
+
+        function cardMeta(item, kind) {
+            if (kind === 'light') {
+                const on = item.light === 'on';
+                return {
+                    id: item.id,
+                    name: item.room,
+                    active: on,
+                    badge: on ? 'ILUMINADO' : 'APAGADO',
+                    detail: item.status,
+                    toggleLabel: on ? 'Ligado' : 'Desligado',
+                    extraClass: '',
+                    onToggle: toggleLight
+                };
+            }
+            const open = item.state === 'open';
+            const locked = (windowsBlocked || isRaining()) && !open;
+            return {
+                id: item.id,
+                name: item.window,
+                active: open,
+                badge: open ? 'ABERTA' : 'FECHADA',
+                detail: item.status,
+                toggleLabel: locked ? 'Bloqueada' : (open ? 'Aberta' : 'Fechada'),
+                extraClass: locked ? 'window-locked' : '',
+                onToggle: toggleWindow
+            };
+        }
+
+        function applyCardState(card, meta) {
+            const isOn = card.classList.contains('on');
+            if (isOn !== meta.active) {
+                card.classList.toggle('on', meta.active);
+                card.classList.toggle('off', !meta.active);
+            }
+            setText(card.querySelector('.room-status-badge'), meta.badge);
+            setText(card.querySelector('.room-name'), meta.name);
+            setText(card.querySelector('.room-detail'), meta.detail || '—');
+            setText(card.querySelector('.toggle-label'), meta.toggleLabel);
+            const toggle = card.querySelector('.toggle-switch');
+            if (toggle) {
+                toggle.classList.toggle('active', meta.active);
+            }
+        }
+
+        function cardHasStructure(card) {
+            return card.querySelector('.room-status-badge')
+                && card.querySelector('.room-name')
+                && card.querySelector('.toggle-label')
+                && card.querySelector('.toggle-switch');
+        }
+
+        function createCard(meta, index, animate, kind) {
+            const card = document.createElement('div');
+            card.classList.add('room-card', meta.active ? 'on' : 'off');
+            if (kind === 'window') card.classList.add('window-card');
+            addCardClasses(card, meta.extraClass);
+            card.dataset.id = meta.id;
+            card.innerHTML = `
+                <div class="card-glow"></div>
+                <div class="card-top">
+                    <div class="room-icon"></div>
+                    <div class="room-status-badge"></div>
+                </div>
+                <div class="room-name"></div>
+                <div class="room-detail"></div>
+                <div class="card-footer">
+                    <span class="toggle-label"></span>
+                    <div class="toggle-switch"></div>
+                </div>`;
+            if (animate) {
+                card.classList.add('card-enter');
+                card.style.animationDelay = `${index * 0.07}s`;
+            }
+            card.addEventListener('click', (e) => meta.onToggle(meta.id, e));
+            applyCardState(card, meta);
+            return card;
+        }
+
+        function syncGrid(grid, items, kind, emptyMsg) {
+            if (!items.length) {
+                grid.innerHTML = `<div class="loading">${emptyMsg}</div>`;
+                grid.removeAttribute('data-mounted');
+                return;
+            }
+
+            grid.querySelector('.loading')?.remove();
+            const animate = !grid.hasAttribute('data-mounted');
+            const seen = new Set();
+
+            items.forEach((item, index) => {
+                const meta = cardMeta(item, kind);
+                seen.add(String(meta.id));
+                let card = grid.querySelector(`[data-id="${meta.id}"]`);
+                if (!card || !cardHasStructure(card)) {
+                    if (card) card.remove();
+                    card = createCard(meta, index, animate, kind);
+                    grid.appendChild(card);
+                } else {
+                    applyCardState(card, meta);
+                    if (kind === 'window') card.classList.add('window-card');
+                    card.classList.toggle('window-locked', meta.extraClass.includes('window-locked'));
+                }
+            });
+
+            grid.querySelectorAll('.room-card[data-id]').forEach(card => {
+                if (!seen.has(card.dataset.id)) card.remove();
+            });
+            grid.setAttribute('data-mounted', '1');
+        }
+
+        function renderRooms() {
+            updateLightStats();
+            syncGrid(
+                document.getElementById('rooms-grid'),
+                rooms,
+                'light',
+                'nenhum ambiente cadastrado'
+            );
+        }
+
+        function renderWindows() {
+            updateWindowStats();
+            syncGrid(
+                document.getElementById('windows-grid'),
+                windows,
+                'window',
+                'nenhuma janela cadastrada'
+            );
+        }
+
+        function invalidateCache() {
+            lastRoomsKey = '';
+            lastWindowsKey = '';
+            lastRainKey = '';
+            lastGateKey = '';
+        }
+
+        async function apiErrorMessage(res) {
+            try {
+                const body = await res.json();
+                return body.error || 'Erro na operação';
+            } catch {
+                return 'Erro na operação';
+            }
+        }
+
+        async function toggleLight(id, event) {
+            if (event) event.stopPropagation();
+            try {
+                await fetch(`${API_LIGHTS}/${id}/toggle`, { method: 'POST' });
+                invalidateCache();
+                await loadRooms();
+                showToast('Luz atualizada');
+            } catch {
+                showToast('Erro ao atualizar luz');
+                invalidateCache();
+                loadRooms();
+            }
+        }
+
+        async function toggleWindow(id, event) {
+            if (event) event.stopPropagation();
+            const item = windows.find(w => w.id === id);
+            if (item && item.state === 'closed' && (windowsBlocked || isRaining())) {
+                showToast('Janelas bloqueadas: está chovendo');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_WINDOWS}/${id}/toggle`, { method: 'POST' });
+                if (!res.ok) {
+                    showToast(res.status === 409 ? await apiErrorMessage(res) : 'Erro ao atualizar janela');
+                    invalidateCache();
+                    loadWindows();
+                    return;
+                }
+                invalidateCache();
+                await loadWindows();
+                showToast('Janela atualizada');
+            } catch {
+                showToast('Erro ao atualizar janela');
+                invalidateCache();
+                loadWindows();
+            }
+        }
+
+        async function allLightsOn() {
+            try {
+                await fetch(`${API_LIGHTS}/all/on`, { method: 'POST' });
+                invalidateCache();
+                await loadRooms();
+                showToast('Todas as luzes ligadas');
+            } catch {
+                showToast('Erro ao ligar luzes');
+                invalidateCache();
+                loadRooms();
+            }
+        }
+
+        async function allLightsOff() {
+            try {
+                await fetch(`${API_LIGHTS}/all/off`, { method: 'POST' });
+                invalidateCache();
+                await loadRooms();
+                showToast('Todas as luzes apagadas');
+            } catch {
+                showToast('Erro ao apagar luzes');
+                invalidateCache();
+                loadRooms();
+            }
+        }
+
+        async function allWindowsOpen() {
+            if (windowsBlocked || isRaining()) {
+                showToast('Janelas bloqueadas: está chovendo');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_WINDOWS}/all/open`, { method: 'POST' });
+                if (!res.ok) {
+                    showToast(res.status === 409 ? await apiErrorMessage(res) : 'Erro ao abrir janelas');
+                    invalidateCache();
+                    loadWindows();
+                    return;
+                }
+                invalidateCache();
+                await loadWindows();
+                showToast('Todas as janelas abertas');
+            } catch {
+                showToast('Erro ao abrir janelas');
+                invalidateCache();
+                loadWindows();
+            }
+        }
+
+        async function allWindowsClosed() {
+            try {
+                await fetch(`${API_WINDOWS}/all/closed`, { method: 'POST' });
+                invalidateCache();
+                await loadWindows();
+                showToast('Todas as janelas fechadas');
+            } catch {
+                showToast('Erro ao fechar janelas');
+                invalidateCache();
+                loadWindows();
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        async function refreshAll() {
+            await Promise.all([loadRooms(), loadWindows(), loadRain(), loadGate()]);
+        }
+
+        refreshAll();
+        setInterval(loadRain, 2000);
+        setInterval(() => { loadRooms(); loadWindows(); loadGate(); }, 5000);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,608 @@
+ *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #080c10;
+            --surface:   #0d1318;
+            --card:      #111820;
+            --border:    #1c2a36;
+            --accent:    #f0a500;
+            --accent2:   #00d4ff;
+            --on:        #f0a500;
+            --off:       #2a3a48;
+            --text:      #c8dae8;
+            --muted:     #4a6070;
+            --danger:    #ff4566;
+            --success:   #00e676;
+            --glow:      rgba(240,165,0,0.18);
+            --glow2:     rgba(0,212,255,0.12);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px; right: -200px;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(240,165,0,0.07) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── HEADER ── */
+        header {
+            position: relative; z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 48px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(8,12,16,0.85);
+            backdrop-filter: blur(12px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-icon { width: 42px; height: 42px; }
+        .logo-icon svg { width: 100%; height: 100%; }
+
+        .logo-text {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: #fff;
+        }
+
+        .logo-text span { color: var(--accent); }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 0.06em;
+            margin-right: 12px;
+        }
+
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .all-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 20px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .all-toggle.on:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 16px var(--glow);
+        }
+
+        .all-toggle.off:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+            box-shadow: 0 0 16px rgba(255,69,102,0.2);
+        }
+
+        /* ── MAIN ── */
+        main {
+            position: relative; z-index: 1;
+            padding: 48px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ── STATS BAR ── */
+        .stats-bar {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 48px;
+        }
+
+        .stat-block {
+            flex: 1;
+            padding: 20px 24px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-block:first-child { border-radius: 4px 0 0 4px; }
+        .stat-block:last-child  { border-radius: 0 4px 4px 0; }
+
+        .stat-block::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+        }
+
+        .stat-block.lit::before   { background: var(--accent);  box-shadow: 0 0 12px var(--accent); }
+        .stat-block.dark::before  { background: var(--muted); }
+        .stat-block.total::before { background: var(--accent2); box-shadow: 0 0 12px var(--accent2); }
+
+        .stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--muted);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-block.lit   .stat-value { color: var(--accent); }
+        .stat-block.dark  .stat-value { color: var(--muted); }
+        .stat-block.total .stat-value { color: var(--accent2); }
+
+        .dashboard-section {
+            margin-bottom: 56px;
+        }
+
+        .row-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .all-toggle.window-action.on:hover {
+            border-color: var(--accent2);
+            color: var(--accent2);
+            box-shadow: 0 0 16px var(--glow2);
+        }
+
+        .stat-block.window-stat::before { background: var(--accent2); box-shadow: 0 0 12px var(--accent2); }
+        .stat-block.window-stat .stat-value { color: var(--accent2); }
+
+        .window-card.on {
+            border-color: rgba(0,212,255,0.4);
+            box-shadow: 0 0 30px var(--glow2), inset 0 0 30px rgba(0,212,255,0.04);
+        }
+
+        .window-card.on .card-glow {
+            background: radial-gradient(circle, rgba(0,212,255,0.12) 0%, transparent 70%);
+        }
+
+        .window-card.on .room-status-badge {
+            background: rgba(0,212,255,0.12);
+            color: var(--accent2);
+            border: 1px solid rgba(0,212,255,0.3);
+        }
+
+        .window-card.on .toggle-switch.active {
+            background: var(--accent2);
+            box-shadow: 0 0 16px rgba(0,212,255,0.5);
+            border-color: var(--accent2);
+        }
+
+        .exterior-panel {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .exterior-slot {
+            min-width: 0;
+            display: flex;
+        }
+
+        .exterior-slot > .rain-card,
+        .exterior-slot > .gate-card {
+            flex: 1;
+            width: 100%;
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .gate-card {
+            cursor: pointer;
+        }
+
+        .rain-card {
+            cursor: default;
+        }
+
+        .exterior-slot > .rain-card .card-footer,
+        .exterior-slot > .gate-card .card-footer {
+            margin-top: auto;
+        }
+
+        .rain-footer .toggle-label {
+            font-size: 0.68rem;
+            letter-spacing: 0.06em;
+        }
+
+        .rain-footer .toggle-readonly {
+            width: 52px;
+            height: 26px;
+            border-radius: 13px;
+            background: var(--off);
+            border: 1px solid var(--border);
+            opacity: 0.45;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+
+        .gate-card.on {
+            border-color: rgba(0, 230, 118, 0.45);
+            box-shadow: 0 0 30px rgba(0, 230, 118, 0.15);
+        }
+
+        .gate-card.on::after {
+            background: linear-gradient(90deg, transparent, var(--success), transparent);
+        }
+
+        .gate-card.on .room-status-badge {
+            background: rgba(0, 230, 118, 0.12);
+            color: var(--success);
+            border: 1px solid rgba(0, 230, 118, 0.35);
+        }
+
+        .gate-card.on .toggle-switch.active {
+            background: var(--success);
+            box-shadow: 0 0 16px rgba(0, 230, 118, 0.45);
+            border-color: var(--success);
+        }
+
+        .windows-block-banner {
+            margin: -16px 0 24px;
+            padding: 12px 16px;
+            border: 1px solid rgba(0, 212, 255, 0.35);
+            border-left: 3px solid var(--accent2);
+            background: rgba(0, 212, 255, 0.08);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.06em;
+            color: var(--accent2);
+            text-transform: uppercase;
+        }
+
+        .all-toggle.disabled,
+        .all-toggle:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .room-card.window-locked {
+            cursor: not-allowed;
+            opacity: 0.72;
+        }
+
+        .room-card.window-locked .toggle-switch {
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .exterior-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .exterior-slot .rain-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rain-card.raining {
+            border-color: rgba(0,212,255,0.45);
+            box-shadow: 0 0 30px var(--glow2);
+        }
+
+        .rain-card.dry {
+            border-color: rgba(240,165,0,0.25);
+        }
+
+
+        /* ── SECTION HEADER ── */
+        .section-header {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 0.7rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--muted);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .section-count {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .section-count span { color: var(--accent); }
+
+        /* ── GRID ── */
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            width: 100%;
+        }
+
+        .rooms-grid > .room-card {
+            width: 100%;
+            min-width: 0;
+        }
+
+        /* ── ROOM CARD ── */
+        .room-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .room-card.on,
+        .room-card.off,
+        .rain-card.raining,
+        .rain-card.dry {
+            transition: transform 0.2s, border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .room-card.card-enter,
+        .rain-card.card-enter {
+            animation: fadeUp 0.5s ease both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .room-card:hover { transform: translateY(-3px); }
+
+        .room-card.on {
+            border-color: rgba(240,165,0,0.4);
+            box-shadow: 0 0 30px var(--glow), inset 0 0 30px rgba(240,165,0,0.04);
+        }
+
+        .room-card.on::after,
+        .window-card.on::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.7;
+        }
+
+        .window-card.on::after {
+            background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+        }
+
+        .room-card.on .card-glow { opacity: 1; }
+
+        .card-glow {
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 180px; height: 180px;
+            background: radial-gradient(circle, rgba(240,165,0,0.12) 0%, transparent 70%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .room-card.on .card-glow,
+        .window-card.on .card-glow {
+            transition: opacity 0.5s;
+        }
+
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .room-icon {
+            width: 44px; height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 1.4rem;
+        }
+
+        .room-status-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 2px;
+            font-weight: 500;
+        }
+
+        .room-card.on  .room-status-badge { background: rgba(240,165,0,0.12); color: var(--accent); border: 1px solid rgba(240,165,0,0.3); }
+        .room-card.off .room-status-badge { background: rgba(42,58,72,0.4);   color: var(--muted);  border: 1px solid var(--border); }
+
+        .room-name {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: capitalize;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .room-detail {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* ── TOGGLE SWITCH ── */
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .toggle-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .toggle-switch {
+            width: 52px; height: 26px;
+            background: var(--off);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: background 0.3s, box-shadow 0.3s;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent);
+            box-shadow: 0 0 16px rgba(240,165,0,0.5);
+            border-color: var(--accent);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 18px; height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .toggle-switch.active::after { transform: translateX(26px); }
+
+        /* ── LOADING ── */
+        .loading {
+            text-align: center;
+            padding: 80px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--muted);
+            letter-spacing: 0.2em;
+            grid-column: 1 / -1;
+        }
+
+        /* ── TOAST ── */
+        #toast {
+            position: fixed;
+            bottom: 32px; right: 32px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            padding: 14px 20px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text);
+            letter-spacing: 0.08em;
+            z-index: 100;
+            transform: translateY(80px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        @media (max-width: 768px) {
+            header { padding: 16px 20px; flex-wrap: wrap; gap: 12px; }
+            main   { padding: 24px 20px; }
+            .stats-bar { flex-direction: column; gap: 8px; }
+            .stat-block { border-radius: 4px !important; }
+            .header-right { width: 100%; justify-content: flex-end; }
+        }

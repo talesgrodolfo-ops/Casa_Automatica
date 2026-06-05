@@ -1,0 +1,317 @@
+# 💡 LightHouse — Controle de Ambientes
+
+Sistema web para controle de iluminação de ambientes, desenvolvido com **Spring Boot** (back-end) e **Thymeleaf + HTML/CSS/JS** (front-end).
+
+---
+
+## 📋 Sobre o Projeto
+
+O **LightHouse** é uma aplicação de automação residencial que controla **luzes**, **janelas** e exibe o estado de **chuva** lido pelo ESP32. Por meio de uma interface web intuitiva, o usuário controla iluminação e aberturas; o sensor de chuva é atualizado apenas pelo firmware.
+
+---
+
+## 🚀 Funcionalidades
+
+- Listar e controlar luzes por ambiente (ligar/desligar, toggle, ligar/apagar tudo)
+- Listar e controlar janelas por ambiente (aberto/fechado, toggle, abrir/fechar tudo)
+- Exibir se está chovendo (estado enviado pelo ESP32 via API)
+- Painéis de estatísticas em tempo real
+- Notificações visuais (toast) para feedback de ações
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+### Back-end
+- **Java 17+**
+- **Spring Boot**
+- **Spring Data JPA**
+- **Hibernate**
+- **Springdoc OpenAPI (Swagger)**
+- **Banco de dados relacional** (ex.: H2, MySQL ou PostgreSQL)
+
+### Front-end
+- **Thymeleaf** (template engine)
+- **HTML5 / CSS3 / JavaScript**
+- Fontes: [Rajdhani](https://fonts.google.com/specimen/Rajdhani) e [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono)
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+src/
+└── main/
+    ├── java/
+    │   └── luzes/coresystemstgr/
+    │       └── quartos/
+    │           ├── Quartos.java          # Entidade JPA
+    │           ├── QuartosRepository.java
+    │           ├── QuartosService.java
+    │           └── QuartosController.java
+    └── resources/
+        ├── templates/
+        │   └── index.html               # Interface principal (Thymeleaf)
+        ├── static/
+        │   └── style.css
+        └── application.properties
+```
+
+---
+
+## ⚙️ Como Executar
+
+### Pré-requisitos
+
+- Java 17 ou superior
+- Maven 3.8+
+
+### Passos
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/seu-usuario/lighthouse.git
+cd lighthouse
+
+# 2. Execute a aplicação
+./mvnw spring-boot:run
+
+# 3. Acesse no navegador
+http://localhost:8000
+```
+
+---
+
+## 🔌 Endpoints da API
+
+Base: `http://localhost:8000`
+
+### Luzes — `/api/quartos`
+
+| Método | Rota                        | Descrição                              |
+|--------|-----------------------------|----------------------------------------|
+| GET    | `/api/quartos`              | Retorna todos os ambientes             |
+| POST   | `/api/quartos`              | Cadastra um novo ambiente              |
+| POST   | `/api/quartos/{id}/toggle`  | Alterna o estado da luz do ambiente    |
+| POST   | `/api/quartos/all/on`       | Liga todas as luzes                    |
+| POST   | `/api/quartos/all/off`      | Apaga todas as luzes                   |
+
+Exemplo — `GET /api/quartos`:
+
+```json
+{
+  "rooms": [
+    {
+      "id": 1,
+      "room": "cozinha",
+      "light": "on",
+      "status": "iluminado"
+    }
+  ]
+}
+```
+
+### Janelas — `/api/janelas`
+
+| Método | Rota                          | Descrição                    |
+|--------|-------------------------------|------------------------------|
+| GET    | `/api/janelas`                | Lista todas as janelas       |
+| POST   | `/api/janelas`                | Cadastra uma janela          |
+| POST   | `/api/janelas/{id}/toggle`    | Alterna aberto/fechado       |
+| POST   | `/api/janelas/all/open`       | Abre todas                   |
+| POST   | `/api/janelas/all/closed`     | Fecha todas                  |
+
+Exemplo — `GET /api/janelas`:
+
+```json
+{
+  "windows": [
+    {
+      "id": 1,
+      "window": "cozinha",
+      "state": "closed",
+      "status": "fechado"
+    }
+  ]
+}
+```
+
+### Chuva (ESP32) — `/api/chuva`
+
+| Método | Rota           | Descrição                                      |
+|--------|----------------|------------------------------------------------|
+| GET    | `/api/chuva`   | Lê se está chovendo (interface web e ESP)      |
+| POST   | `/api/chuva`   | **ESP32 envia** leitura do sensor de chuva     |
+
+Corpo do `POST` (ESP32):
+
+```json
+{ "rain": "yes" }
+```
+
+Valores aceitos para `rain`: `yes` / `no` (também `on` / `off`).
+
+Exemplo — `GET /api/chuva`:
+
+```json
+{
+  "rain": "yes",
+  "status": "chovendo"
+}
+```
+
+### Documentação interativa (Swagger)
+
+```
+http://localhost:8000/swagger-ui.html
+```
+
+---
+
+## 🗄️ Modelo de Dados
+
+### Luzes (`Quartos`)
+
+| Campo    | Tipo    | Descrição                          |
+|----------|---------|------------------------------------|
+| `id`     | Long    | Identificador único                |
+| `room`   | String  | Nome do ambiente (ex.: "cozinha")  |
+| `light`  | String  | `"on"` ou `"off"`                  |
+| `status` | String  | `"iluminado"` ou `"apagado"`       |
+
+### Janelas (`Janela`)
+
+| Campo    | Tipo    | Descrição                          |
+|----------|---------|------------------------------------|
+| `id`     | Long    | Identificador único                |
+| `window` | String  | Nome do ambiente                   |
+| `state`  | String  | `"open"` ou `"closed"`             |
+| `status` | String  | `"aberto"` ou `"fechado"`          |
+
+### Chuva (`Chuva` — registro único, sensor ESP)
+
+| Campo    | Tipo    | Descrição                          |
+|----------|---------|------------------------------------|
+| `rain`   | String  | `"yes"` ou `"no"`                  |
+| `status` | String  | `"chovendo"` ou `"sem chuva"`      |
+
+---
+
+## 🖥️ Interface
+
+A interface conta com:
+
+- **Header** com logo, badge de status do sistema e botões de ação global
+- **Painel de estatísticas** com contadores de ambientes iluminados, apagados e total
+- **Grade de cards** com cada ambiente cadastrado, exibindo ícone, nome, status e toggle interativo
+- **Notificações toast** para feedback de ações bem-sucedidas ou erros
+
+---
+
+## 🤖 Firmware ESP32 (Arduino)
+
+O projeto conta também com um cliente físico rodando em um **ESP32**, que:
+
+1. **Lê** `GET /api/quartos` e aciona LEDs conforme `light`.
+2. **Envia** `POST /api/chuva` com a leitura do sensor de chuva (a interface web só exibe esse valor).
+
+### Bibliotecas necessárias
+
+- `WiFi`, `HTTPClient` (nativas do ESP32)
+- `ArduinoJson` (Benoit Blanchon)
+
+### Mapeamento de pinos
+
+| Função              | Pino GPIO |
+|---------------------|-----------|
+| LED Cozinha         | 2         |
+| LED Quarto          | 4         |
+| LED Sala            | 5         |
+| Sensor de chuva     | 18        |
+
+> No sensor de chuva, use `INPUT_PULLUP`: pino em **LOW** quando está chovendo (contato fechado), **HIGH** quando seco.
+
+### Código (luzes + chuva)
+
+```cpp
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+const char* ssid = "SEU_SSID";
+const char* password = "SUA_SENHA";
+const char* serverBase = "http://SEU_IP:8000";
+
+#define LED_COZINHA 2
+#define LED_QUARTO  4
+#define LED_SALA    5
+#define PIN_CHUVA   18
+
+void sincronizarLuzes() {
+  HTTPClient http;
+  http.begin(String(serverBase) + "/api/quartos");
+  int httpCode = http.GET();
+
+  if (httpCode == HTTP_CODE_OK) {
+    String payload = http.getString();
+    DynamicJsonDocument doc(2048);
+    if (!deserializeJson(doc, payload)) {
+      for (JsonObject room : doc["rooms"].as<JsonArray>()) {
+        String nome = room["room"].as<String>();
+        nome.toLowerCase();
+        bool ligado = room["light"].as<String>() == "on";
+        int pin = -1;
+        if (nome == "cozinha") pin = LED_COZINHA;
+        else if (nome == "quarto") pin = LED_QUARTO;
+        else if (nome == "sala") pin = LED_SALA;
+        if (pin != -1) digitalWrite(pin, ligado ? HIGH : LOW);
+      }
+    }
+  }
+  http.end();
+}
+
+void enviarChuva() {
+  bool chovendo = digitalRead(PIN_CHUVA) == LOW;
+  HTTPClient http;
+  http.begin(String(serverBase) + "/api/chuva");
+  http.addHeader("Content-Type", "application/json");
+  String body = chovendo ? "{\"rain\":\"yes\"}" : "{\"rain\":\"no\"}";
+  http.POST(body);
+  http.end();
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(LED_COZINHA, OUTPUT);
+  pinMode(LED_QUARTO, OUTPUT);
+  pinMode(LED_SALA, OUTPUT);
+  pinMode(PIN_CHUVA, INPUT_PULLUP);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) delay(500);
+}
+
+void loop() {
+  sincronizarLuzes();
+  enviarChuva();
+  delay(300);
+}
+```
+
+### Como funciona
+
+1. O ESP32 conecta-se ao Wi-Fi e, a cada **300 ms**, busca as luzes e atualiza os LEDs.
+2. Na mesma cadência, lê o pino do sensor de chuva e faz **`POST /api/chuva`** com `"rain": "yes"` ou `"no"`.
+3. A interface web consulta **`GET /api/chuva`** e mostra chovendo / sem chuva (somente leitura).
+
+> Substitua `SEU_SSID`, `SUA_SENHA` e `SEU_IP`. ESP32 e servidor devem estar na **mesma rede local**.
+
+---
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Consulte o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+---
+
+> Desenvolvido com ☕ Java e ⚡ ESP32 por **Luma K. de Siqueira** e **Tales G. Rodolfo**.
