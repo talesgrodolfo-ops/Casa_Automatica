@@ -58,7 +58,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/chuva").hasAnyRole("DEVICE", "USER")
                 .requestMatchers(HttpMethod.GET, "/api/quartos").hasAnyRole("DEVICE", "USER")
                 .requestMatchers("/api/**").hasRole("USER")
-                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").hasRole("USER")
+                .requestMatchers("/v3/api-docs/**").hasRole("USER")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
