@@ -65,6 +65,32 @@ src/
 
 - Java 17 ou superior
 - Maven 3.8+
+- MySQL em execução
+
+### Segurança (obrigatório)
+
+A API **não inicia** sem credenciais configuradas. Copie o exemplo e defina valores fortes:
+
+```bash
+cp application.properties.example src/main/resources/application-local.properties
+```
+
+Edite `application-local.properties` (arquivo gitignored) ou use variáveis de ambiente:
+
+| Variável | Descrição |
+|----------|-----------|
+| `LIGHTHOUSE_USER` | Usuário do painel web (padrão: `admin`) |
+| `LIGHTHOUSE_PASSWORD` | Senha do painel (**mín. 12 caracteres**) |
+| `LIGHTHOUSE_DEVICE_API_KEY` | Chave do ESP32 (**mín. 32 caracteres**) |
+| `MYSQL_PASSWORD` | Senha do banco MySQL |
+| `LIGHTHOUSE_RATE_LIMIT` | Requisições por IP por minuto (padrão: `120`) |
+
+**Autenticação:**
+
+- **Navegador:** login em `/login` (sessão + CSRF nos POSTs da interface).
+- **ESP32:** header `X-API-Key` com a chave do dispositivo. O ESP32 só pode `GET /api/quartos` e `POST /api/chuva`.
+
+**Exposição pública:** use HTTPS (Cloudflare Tunnel ou proxy reverso). Não abra porta no roteador sem TLS na frente.
 
 ### Passos
 
@@ -73,11 +99,13 @@ src/
 git clone https://github.com/seu-usuario/lighthouse.git
 cd lighthouse
 
-# 2. Execute a aplicação
+# 2. Configure segredos (application-local.properties ou env vars)
+
+# 3. Execute a aplicação
 ./mvnw spring-boot:run
 
-# 3. Acesse no navegador
-http://localhost:8000
+# 4. Acesse no navegador e faça login
+http://localhost:8000/login
 ```
 
 ---
@@ -250,6 +278,7 @@ const char* serverBase = "http://SEU_IP:8000";
 void sincronizarLuzes() {
   HTTPClient http;
   http.begin(String(serverBase) + "/api/quartos");
+  http.addHeader("X-API-Key", "SUA_CHAVE_DO_ESP32");  // mesma de LIGHTHOUSE_DEVICE_API_KEY
   int httpCode = http.GET();
 
   if (httpCode == HTTP_CODE_OK) {
@@ -276,6 +305,7 @@ void enviarChuva() {
   HTTPClient http;
   http.begin(String(serverBase) + "/api/chuva");
   http.addHeader("Content-Type", "application/json");
+  http.addHeader("X-API-Key", "SUA_CHAVE_DO_ESP32");  // mesma de LIGHTHOUSE_DEVICE_API_KEY
   String body = chovendo ? "{\"rain\":\"yes\"}" : "{\"rain\":\"no\"}";
   http.POST(body);
   http.end();

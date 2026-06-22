@@ -5,6 +5,8 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <title>LightHouse — Controle de Ambientes</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap"
@@ -25,6 +27,10 @@
                 <div class="status-dot"></div>
                 SISTEMA ONLINE
             </div>
+            <form th:action="@{/logout}" method="post" class="logout-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="logout-btn">SAIR</button>
+            </form>
         </div>
     </header>
 
@@ -129,6 +135,22 @@
         let lastGateKey = '';
         let windowsLoadSeq = 0;
 
+        async function apiFetch(url, options = {}) {
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+            const headers = { ...(options.headers || {}) };
+            const method = (options.method || 'GET').toUpperCase();
+            if (csrfToken && method !== 'GET' && method !== 'HEAD') {
+                headers[csrfHeader] = csrfToken;
+            }
+            const res = await fetch(url, { ...options, headers, credentials: 'same-origin' });
+            if (res.status === 401) {
+                window.location.href = '/login';
+                throw new Error('Não autenticado');
+            }
+            return res;
+        }
+
         function isRaining() {
             return rain.rain === 'yes';
         }
@@ -144,7 +166,7 @@
 
         async function loadRain() {
             try {
-                const res = await fetch(API_RAIN);
+                const res = await apiFetch(API_RAIN);
                 const data = await res.json();
                 const key = JSON.stringify(data);
                 const rainChanged = key !== lastRainKey;
@@ -169,7 +191,7 @@
 
         async function loadGate() {
             try {
-                const res = await fetch(API_GATE);
+                const res = await apiFetch(API_GATE);
                 const data = await res.json();
                 const key = JSON.stringify(data);
                 if (key === lastGateKey) return;
@@ -207,7 +229,7 @@
                     <div class="room-name">Sensor de chuva</div>
                     <div class="room-detail"></div>
                     <div class="card-footer rain-footer">
-                        <span class="toggle-label">ESP32 · somente leitura</span>
+                        <span class="toggle-label">Somente leitura</span>
                         <div class="toggle-readonly" aria-hidden="true"></div>
                     </div>`;
                 slot.appendChild(card);
@@ -268,7 +290,7 @@
         async function toggleGate(event) {
             if (event) event.stopPropagation();
             try {
-                const res = await fetch(`${API_GATE}/toggle`, { method: 'POST' });
+                const res = await apiFetch(`${API_GATE}/toggle`, { method: 'POST' });
                 if (!res.ok) throw new Error();
                 lastGateKey = '';
                 await loadGate();
@@ -291,7 +313,7 @@
 
         async function loadRooms() {
             try {
-                const res = await fetch(API_LIGHTS);
+                const res = await apiFetch(API_LIGHTS);
                 const data = await res.json();
                 const list = data.rooms || [];
                 const key = JSON.stringify(list);
@@ -310,7 +332,7 @@
             const seq = ++windowsLoadSeq;
             const grid = document.getElementById('windows-grid');
             try {
-                const res = await fetch(API_WINDOWS);
+                const res = await apiFetch(API_WINDOWS);
                 if (!res.ok) {
                     throw new Error(`HTTP ${res.status}`);
                 }
@@ -498,7 +520,7 @@
         async function toggleLight(id, event) {
             if (event) event.stopPropagation();
             try {
-                await fetch(`${API_LIGHTS}/${id}/toggle`, { method: 'POST' });
+                await apiFetch(`${API_LIGHTS}/${id}/toggle`, { method: 'POST' });
                 invalidateCache();
                 await loadRooms();
                 showToast('Luz atualizada');
@@ -517,7 +539,7 @@
                 return;
             }
             try {
-                const res = await fetch(`${API_WINDOWS}/${id}/toggle`, { method: 'POST' });
+                const res = await apiFetch(`${API_WINDOWS}/${id}/toggle`, { method: 'POST' });
                 if (!res.ok) {
                     showToast(res.status === 409 ? await apiErrorMessage(res) : 'Erro ao atualizar janela');
                     invalidateCache();
@@ -536,7 +558,7 @@
 
         async function allLightsOn() {
             try {
-                await fetch(`${API_LIGHTS}/all/on`, { method: 'POST' });
+                await apiFetch(`${API_LIGHTS}/all/on`, { method: 'POST' });
                 invalidateCache();
                 await loadRooms();
                 showToast('Todas as luzes ligadas');
@@ -549,7 +571,7 @@
 
         async function allLightsOff() {
             try {
-                await fetch(`${API_LIGHTS}/all/off`, { method: 'POST' });
+                await apiFetch(`${API_LIGHTS}/all/off`, { method: 'POST' });
                 invalidateCache();
                 await loadRooms();
                 showToast('Todas as luzes apagadas');
@@ -566,7 +588,7 @@
                 return;
             }
             try {
-                const res = await fetch(`${API_WINDOWS}/all/open`, { method: 'POST' });
+                const res = await apiFetch(`${API_WINDOWS}/all/open`, { method: 'POST' });
                 if (!res.ok) {
                     showToast(res.status === 409 ? await apiErrorMessage(res) : 'Erro ao abrir janelas');
                     invalidateCache();
@@ -585,7 +607,7 @@
 
         async function allWindowsClosed() {
             try {
-                await fetch(`${API_WINDOWS}/all/closed`, { method: 'POST' });
+                await apiFetch(`${API_WINDOWS}/all/closed`, { method: 'POST' });
                 invalidateCache();
                 await loadWindows();
                 showToast('Todas as janelas fechadas');

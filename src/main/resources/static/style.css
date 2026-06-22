@@ -599,6 +599,119 @@
 
         #toast.show { transform: translateY(0); opacity: 1; }
 
+        .logout-form { margin: 0; }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.12em;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+
+        .login-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .login-shell {
+            position: relative;
+            z-index: 1;
+            width: min(100%, 420px);
+            padding: 24px;
+        }
+
+        .login-card {
+            background: rgba(13, 19, 24, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 32px 28px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+        }
+
+        .login-logo { margin-bottom: 12px; }
+
+        .login-subtitle {
+            color: var(--muted);
+            margin-bottom: 24px;
+            letter-spacing: 0.06em;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .login-label {
+            font-size: 0.75rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .login-input {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            padding: 12px 14px;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: var(--accent2);
+            box-shadow: 0 0 0 2px var(--glow2);
+        }
+
+        .login-submit {
+            margin-top: 8px;
+            background: linear-gradient(135deg, var(--accent), #c48400);
+            border: none;
+            border-radius: 4px;
+            color: #111;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            padding: 14px;
+        }
+
+        .login-alert {
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            margin-bottom: 16px;
+            padding: 10px 12px;
+        }
+
+        .login-alert.error {
+            background: rgba(255, 69, 102, 0.12);
+            border: 1px solid rgba(255, 69, 102, 0.35);
+            color: #ff8da0;
+        }
+
+        .login-alert.success {
+            background: rgba(0, 230, 118, 0.1);
+            border: 1px solid rgba(0, 230, 118, 0.35);
+            color: #7dffb0;
+        }
+
         @media (max-width: 768px) {
             header { padding: 16px 20px; flex-wrap: wrap; gap: 12px; }
             main   { padding: 24px 20px; }
