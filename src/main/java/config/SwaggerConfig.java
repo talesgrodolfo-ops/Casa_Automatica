@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
     info = @Info(
-        title = "LightHouse API",
+        title = "Casa Automática API",
         description = "API protegida. Use sessão web (login) ou X-API-Key para o ESP32 nos endpoints permitidos.",
         version = "v1.0.0"
     ),

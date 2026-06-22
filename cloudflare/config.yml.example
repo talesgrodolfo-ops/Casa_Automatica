@@ -1,0 +1,10 @@
+# Substitua SEUDOMINIO.com pelo seu domínio na Cloudflare.
+# Após criar o túnel, copie o UUID e o caminho do credentials-file.
+
+tunnel: COLE_O_UUID_DO_TUNNEL_AQUI
+credentials-file: C:\Users\SEU_USUARIO\.cloudflared\COLE_O_UUID_DO_TUNNEL_AQUI.json
+
+ingress:
+  - hostname: 
+    service: https://casa.automatica.coresystemstgr.com
+  - service: http_status:404

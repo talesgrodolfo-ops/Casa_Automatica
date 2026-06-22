@@ -6,14 +6,14 @@ import jakarta.validation.constraints.Size;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
-@ConfigurationProperties(prefix = "lighthouse.security")
+@ConfigurationProperties(prefix = "casa-automatica.security")
 @Validated
 public class SecurityProperties {
 
     @Valid
     private User user = new User();
 
-    @NotBlank(message = "Defina lighthouse.security.device-api-key ou LIGHTHOUSE_DEVICE_API_KEY")
+    @NotBlank(message = "Defina casa-automatica.security.device-api-key ou CASA_AUTOMATICA_DEVICE_API_KEY")
     @Size(min = 32, message = "A chave do ESP32 deve ter pelo menos 32 caracteres")
     private String deviceApiKey;
 
@@ -47,10 +47,10 @@ public class SecurityProperties {
     @Validated
     public static class User {
 
-        @NotBlank(message = "Defina lighthouse.security.user.name ou LIGHTHOUSE_USER")
+        @NotBlank(message = "Defina casa-automatica.security.user.name ou CASA_AUTOMATICA_USER")
         private String name = "admin";
 
-        @NotBlank(message = "Defina lighthouse.security.user.password ou LIGHTHOUSE_PASSWORD")
+        @NotBlank(message = "Defina casa-automatica.security.user.password ou CASA_AUTOMATICA_PASSWORD")
         @Size(min = 12, message = "A senha do usuário deve ter pelo menos 12 caracteres")
         private String password;
 

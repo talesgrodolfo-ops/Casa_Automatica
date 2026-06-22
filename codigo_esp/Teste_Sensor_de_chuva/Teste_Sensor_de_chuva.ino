@@ -1,4 +1,4 @@
-#define POWER_PIN 19   
+#define POWER_PIN 36   
 #define DO_PIN 21     
 
 void  setup () { 

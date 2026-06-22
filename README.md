@@ -1,4 +1,4 @@
-# 💡 LightHouse — Controle de Ambientes
+# 🏠 Casa Automática — Controle de Ambientes
 
 Sistema web para controle de iluminação de ambientes, desenvolvido com **Spring Boot** (back-end) e **Thymeleaf + HTML/CSS/JS** (front-end).
 
@@ -6,7 +6,7 @@ Sistema web para controle de iluminação de ambientes, desenvolvido com **Sprin
 
 ## 📋 Sobre o Projeto
 
-O **LightHouse** é uma aplicação de automação residencial que controla **luzes**, **janelas** e exibe o estado de **chuva** lido pelo ESP32. Por meio de uma interface web intuitiva, o usuário controla iluminação e aberturas; o sensor de chuva é atualizado apenas pelo firmware.
+A **Casa Automática** é uma aplicação de automação residencial que controla **luzes**, **janelas** e exibe o estado de **chuva** lido pelo ESP32. Por meio de uma interface web intuitiva, o usuário controla iluminação e aberturas; o sensor de chuva é atualizado apenas pelo firmware.
 
 ---
 
@@ -79,11 +79,11 @@ Edite `application-local.properties` (arquivo gitignored) ou use variáveis de a
 
 | Variável | Descrição |
 |----------|-----------|
-| `LIGHTHOUSE_USER` | Usuário do painel web (padrão: `admin`) |
-| `LIGHTHOUSE_PASSWORD` | Senha do painel (**mín. 12 caracteres**) |
-| `LIGHTHOUSE_DEVICE_API_KEY` | Chave do ESP32 (**mín. 32 caracteres**) |
+| `CASA_AUTOMATICA_USER` | Usuário do painel web (padrão: `admin`) |
+| `CASA_AUTOMATICA_PASSWORD` | Senha do painel (**mín. 12 caracteres**) |
+| `CASA_AUTOMATICA_DEVICE_API_KEY` | Chave do ESP32 (**mín. 32 caracteres**) |
 | `MYSQL_PASSWORD` | Senha do banco MySQL |
-| `LIGHTHOUSE_RATE_LIMIT` | Requisições por IP por minuto (padrão: `120`) |
+| `CASA_AUTOMATICA_RATE_LIMIT` | Requisições por IP por minuto (padrão: `120`) |
 
 **Autenticação:**
 
@@ -96,8 +96,8 @@ Edite `application-local.properties` (arquivo gitignored) ou use variáveis de a
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/seu-usuario/lighthouse.git
-cd lighthouse
+git clone https://github.com/seu-usuario/casa-automatica.git
+cd casa-automatica
 
 # 2. Configure segredos (application-local.properties ou env vars)
 
@@ -278,7 +278,7 @@ const char* serverBase = "http://SEU_IP:8000";
 void sincronizarLuzes() {
   HTTPClient http;
   http.begin(String(serverBase) + "/api/quartos");
-  http.addHeader("X-API-Key", "SUA_CHAVE_DO_ESP32");  // mesma de LIGHTHOUSE_DEVICE_API_KEY
+  http.addHeader("X-API-Key", "SUA_CHAVE_DO_ESP32");  // mesma de CASA_AUTOMATICA_DEVICE_API_KEY
   int httpCode = http.GET();
 
   if (httpCode == HTTP_CODE_OK) {
@@ -305,7 +305,7 @@ void enviarChuva() {
   HTTPClient http;
   http.begin(String(serverBase) + "/api/chuva");
   http.addHeader("Content-Type", "application/json");
-  http.addHeader("X-API-Key", "SUA_CHAVE_DO_ESP32");  // mesma de LIGHTHOUSE_DEVICE_API_KEY
+  http.addHeader("X-API-Key", "SUA_CHAVE_DO_ESP32");  // mesma de CASA_AUTOMATICA_DEVICE_API_KEY
   String body = chovendo ? "{\"rain\":\"yes\"}" : "{\"rain\":\"no\"}";
   http.POST(body);
   http.end();

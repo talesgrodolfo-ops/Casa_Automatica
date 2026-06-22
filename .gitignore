@@ -35,5 +35,9 @@ build/
 ### Segredos locais ###
 application-local.properties
 src/main/resources/application-local.properties
+codigo_esp/Casa_Automatica_ESP/config.h
+codigo_esp/codigo_completo/config.h
+cloudflare/config.yml
+cloudflare/*.json
 .env
 .env.*
