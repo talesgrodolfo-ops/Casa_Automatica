@@ -15,7 +15,8 @@ import java.util.List;
 @Component
 public class DataSeeder implements ApplicationRunner {
 
-    private static final List<String> AMBIENTES_PADRAO = List.of("cozinha", "quarto", "sala");
+    private static final List<String> AMBIENTES_PADRAO = List.of("sala", "quarto", "cozinha", "sótão");
+    private static final List<String> JANELAS_PADRAO = List.of("sala", "garagem");
 
     private final QuartosRepository quartosRepository;
     private final JanelaRepository janelaRepository;
@@ -50,7 +51,7 @@ public class DataSeeder implements ApplicationRunner {
         }
 
         if (janelaRepository.count() == 0) {
-            for (String ambiente : AMBIENTES_PADRAO) {
+            for (String ambiente : JANELAS_PADRAO) {
                 Janela janela = new Janela();
                 janela.setWindowName(ambiente);
                 janela.setState("closed");
