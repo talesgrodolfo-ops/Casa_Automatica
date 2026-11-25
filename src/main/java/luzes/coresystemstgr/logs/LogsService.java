@@ -2,6 +2,7 @@ package luzes.coresystemstgr.logs;
 
 import luzes.coresystemstgr.chuva.MomentoChuva;
 import luzes.coresystemstgr.chuva.MomentoChuvaRepository;
+import luzes.coresystemstgr.porta.CartaoPessoaService;
 import luzes.coresystemstgr.porta.EntradaPorta;
 import luzes.coresystemstgr.porta.EntradaPortaRepository;
 import org.springframework.stereotype.Service;
@@ -24,10 +25,16 @@ public class LogsService {
 
     private final MomentoChuvaRepository momentoRepository;
     private final EntradaPortaRepository entradaRepository;
+    private final CartaoPessoaService cartaoPessoaService;
 
-    public LogsService(MomentoChuvaRepository momentoRepository, EntradaPortaRepository entradaRepository) {
+    public LogsService(
+        MomentoChuvaRepository momentoRepository,
+        EntradaPortaRepository entradaRepository,
+        CartaoPessoaService cartaoPessoaService
+    ) {
         this.momentoRepository = momentoRepository;
         this.entradaRepository = entradaRepository;
+        this.cartaoPessoaService = cartaoPessoaService;
     }
 
     public Map<String, Object> porDia(LocalDate dia) {
@@ -36,8 +43,14 @@ public class LogsService {
         List<MomentoChuva> moments = momentoRepository.findAllByOrderByInicioDesc().stream()
             .filter(m -> sobrepoeDia(m, inicio, fim))
             .collect(Collectors.toList());
+        Map<String, String> nomes = cartaoPessoaService.mapaNomes();
         List<EntradaPorta> entries = entradaRepository
             .findByOcorridoEmBetweenOrderByOcorridoEmDesc(inicio, fim);
+        for (EntradaPorta entrada : entries) {
+            if (entrada.getCardUid() != null) {
+                entrada.setNome(nomes.get(entrada.getCardUid()));
+            }
+        }
         return Map.of(
             "date", dia.toString(),
             "moments", moments,

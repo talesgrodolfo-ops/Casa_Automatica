@@ -13,13 +13,22 @@ public class EntradaPortaService {
     public static final ZoneId ZONA = ZoneId.of("America/Sao_Paulo");
 
     private final EntradaPortaRepository repository;
+    private final CartaoPessoaService cartaoPessoaService;
 
-    public EntradaPortaService(EntradaPortaRepository repository) {
+    public EntradaPortaService(EntradaPortaRepository repository, CartaoPessoaService cartaoPessoaService) {
         this.repository = repository;
+        this.cartaoPessoaService = cartaoPessoaService;
     }
 
     public List<EntradaPorta> listar() {
-        return repository.findAllByOrderByOcorridoEmDesc();
+        Map<String, String> nomes = cartaoPessoaService.mapaNomes();
+        List<EntradaPorta> entradas = repository.findAllByOrderByOcorridoEmDesc();
+        for (EntradaPorta entrada : entradas) {
+            if (entrada.getCardUid() != null) {
+                entrada.setNome(nomes.get(entrada.getCardUid()));
+            }
+        }
+        return entradas;
     }
 
     public EntradaPorta registrar(EntradaPortaRequest request) {
@@ -35,7 +44,11 @@ public class EntradaPortaService {
             ocorrido = agora;
         }
         entrada.setOcorridoEm(ocorrido);
-        return repository.save(entrada);
+        EntradaPorta salva = repository.save(entrada);
+        if (salva.getCardUid() != null) {
+            salva.setNome(cartaoPessoaService.nomeDe(salva.getCardUid()));
+        }
+        return salva;
     }
 
     public Map<String, Object> listarResposta() {

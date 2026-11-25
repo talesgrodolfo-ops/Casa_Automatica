@@ -18,6 +18,7 @@ A **Casa Automática** é uma aplicação de automação residencial que control
 - Histórico de momentos de chuva (início e fim com data/hora)
 - Registro de entradas pela porta RFID (data/hora; fila offline no ESP)
 - Tela `/logs` com calendário: clique no dia para ver chuva e entradas daquele dia
+- Cadastro do nome da pessoa por UID do cartão RFID (salvo no site)
 - Custom Skill Alexa para acender luzes, abrir/fechar janelas e portão
 - Painéis de estatísticas em tempo real
 - Notificações visuais (toast) para feedback de ações
@@ -236,6 +237,19 @@ Exemplos de fala:
 - “Alexa, peça para a casa automática acender a luz da sala”
 - “Alexa, peça para a casa automática abrir as janelas”
 - “Alexa, peça para a casa automática abrir o portão”
+
+### Cartões RFID — `/api/porta/cartoes`
+
+| Método | Rota                          | Descrição                                      |
+|--------|-------------------------------|------------------------------------------------|
+| GET    | `/api/porta/cartoes`          | Lista UIDs conhecidos e nomes cadastrados      |
+| PUT    | `/api/porta/cartoes/{cardUid}`| Salva/atualiza o nome da pessoa do cartão      |
+
+Corpo do `PUT`:
+
+```json
+{ "nome": "Maria Silva" }
+```
 
 ### Porta RFID — `/api/porta/entradas`
 

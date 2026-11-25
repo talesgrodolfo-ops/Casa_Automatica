@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
-@JsonPropertyOrder({"id", "cardUid", "ocorridoEm", "sincronizadoEm", "offline"})
+@JsonPropertyOrder({"id", "cardUid", "nome", "ocorridoEm", "sincronizadoEm", "offline"})
 @Entity
 @Table(name = "entrada_porta")
 public class EntradaPorta {
@@ -18,6 +18,10 @@ public class EntradaPorta {
     @Column(name = "card_uid", length = 64)
     @Schema(description = "UID do cartão RFID em hexadecimal")
     private String cardUid;
+
+    @Transient
+    @Schema(description = "Nome cadastrado no site para este cartão")
+    private String nome;
 
     @Column(name = "ocorrido_em", nullable = false)
     @Schema(description = "Quando a entrada ocorreu (Java ou enviada pelo ESP após NTP)")
@@ -45,6 +49,14 @@ public class EntradaPorta {
 
     public void setCardUid(String cardUid) {
         this.cardUid = cardUid;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
     }
 
     public LocalDateTime getOcorridoEm() {
