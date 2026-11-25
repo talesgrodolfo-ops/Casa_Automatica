@@ -11,7 +11,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" th:href="@{/style.css(v=12)}" />
+    <link rel="stylesheet" th:href="@{/style.css(v=13)}" />
 </head>
 
 <body>
@@ -25,6 +25,7 @@
         <nav class="main-nav" aria-label="Navegação principal">
             <a class="nav-link" th:href="@{/}">Painel</a>
             <a class="nav-link active" th:href="@{/logs}">Logs</a>
+            <a class="nav-link" th:href="@{/cartoes}">Cartões</a>
         </nav>
 
         <div class="header-right">
@@ -83,24 +84,11 @@
                 </div>
             </div>
         </section>
-
-        <section class="dashboard-section" id="section-cards">
-            <div class="section-header">
-                <div class="section-title">Cartões RFID</div>
-                <div class="section-count">Nome <span>da pessoa</span></div>
-            </div>
-            <div class="event-list" id="cards-list">
-                <div class="loading">carregando cartões...</div>
-            </div>
-        </section>
     </main>
-
-    <div id="toast"></div>
 
     <script>
         const API_CALENDAR = '/api/logs/calendario';
         const API_DAY = '/api/logs/dia';
-        const API_CARDS = '/api/porta/cartoes';
         const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
         const MONTHS = [
             'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -111,7 +99,6 @@
         let viewMonth; // 1-12
         let selectedDay = null;
         let markedDays = new Set();
-        let cardNames = {};
 
         function pad(n) {
             return String(n).padStart(2, '0');
@@ -304,13 +291,6 @@
                 .replaceAll("'", '&#39;');
         }
 
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
-        }
-
         function renderDoorEntries(entries) {
             const list = document.getElementById('door-entries-list');
             if (!entries.length) {
@@ -319,7 +299,7 @@
             }
             list.innerHTML = entries.map(e => {
                 const uid = e.cardUid || '';
-                const nome = e.nome || cardNames[uid] || '';
+                const nome = e.nome || '';
                 const titulo = nome ? escapeHtml(nome) : `Cartão ${escapeHtml(uid || '—')}`;
                 return `
                 <article class="event-row ${e.offline ? 'offline' : ''}">
@@ -330,87 +310,10 @@
                             <span>Ocorrido: ${formatDateTime(e.ocorridoEm)}</span>
                             <span>Sync: ${formatDateTime(e.sincronizadoEm)}</span>
                         </div>
-                        ${uid ? cardNameForm(uid, nome) : ''}
                     </div>
                     <div class="event-badge">${e.offline ? 'OFFLINE' : 'ONLINE'}</div>
                 </article>`;
             }).join('');
-            bindCardForms(list);
-        }
-
-        function cardNameForm(uid, nome) {
-            return `
-                <form class="card-name-form" data-uid="${escapeHtml(uid)}">
-                    <input class="card-name-input" type="text" maxlength="120"
-                        placeholder="Nome da pessoa"
-                        value="${escapeHtml(nome)}"
-                        aria-label="Nome da pessoa do cartão ${escapeHtml(uid)}" />
-                    <button type="submit" class="all-toggle on card-name-save">SALVAR</button>
-                </form>`;
-        }
-
-        function bindCardForms(root) {
-            root.querySelectorAll('.card-name-form').forEach(form => {
-                form.addEventListener('submit', async (event) => {
-                    event.preventDefault();
-                    const uid = form.dataset.uid;
-                    const input = form.querySelector('.card-name-input');
-                    const nome = (input?.value || '').trim();
-                    if (!nome) {
-                        showToast('Informe o nome da pessoa');
-                        return;
-                    }
-                    try {
-                        const res = await apiFetch(`${API_CARDS}/${encodeURIComponent(uid)}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ nome })
-                        });
-                        if (!res.ok) throw new Error('save');
-                        const data = await res.json();
-                        cardNames[uid] = data.nome;
-                        showToast(`Nome salvo: ${data.nome}`);
-                        await loadCards();
-                        if (selectedDay) {
-                            await openDay(selectedDay);
-                        }
-                    } catch {
-                        showToast('Erro ao salvar nome do cartão');
-                    }
-                });
-            });
-        }
-
-        async function loadCards() {
-            const list = document.getElementById('cards-list');
-            try {
-                const res = await apiFetch(API_CARDS);
-                if (!res.ok) throw new Error('cards');
-                const data = await res.json();
-                const cards = Array.isArray(data.cards) ? data.cards : [];
-                cardNames = {};
-                cards.forEach(c => {
-                    if (c.cardUid) cardNames[c.cardUid] = c.nome || '';
-                });
-                if (!cards.length) {
-                    list.innerHTML = '<div class="loading">nenhum cartão lido ainda — passe um cartão na porta</div>';
-                    return;
-                }
-                list.innerHTML = cards.map(c => `
-                    <article class="event-row">
-                        <div class="event-main">
-                            <div class="event-title">${c.nome ? escapeHtml(c.nome) : 'Sem nome'}</div>
-                            <div class="event-meta">
-                                <span>UID: ${escapeHtml(c.cardUid || '—')}</span>
-                            </div>
-                            ${c.cardUid ? cardNameForm(c.cardUid, c.nome || '') : ''}
-                        </div>
-                        <div class="event-badge">${c.nome ? 'CADASTRADO' : 'NOVO'}</div>
-                    </article>`).join('');
-                bindCardForms(list);
-            } catch {
-                list.innerHTML = '<div class="loading">erro ao carregar cartões</div>';
-            }
         }
 
         document.getElementById('btn-prev-month').addEventListener('click', async () => {
@@ -437,7 +340,7 @@
 
         (async function boot() {
             initViewMonth();
-            await Promise.all([refreshCalendar(), loadCards()]);
+            await refreshCalendar();
             if (selectedDay) {
                 await openDay(selectedDay);
             }

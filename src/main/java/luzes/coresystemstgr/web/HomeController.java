@@ -15,4 +15,9 @@ public class HomeController {
     public String logs() {
         return "logs";
     }
+
+    @GetMapping("/cartoes")
+    public String cartoes() {
+        return "cartoes";
+    }
 }

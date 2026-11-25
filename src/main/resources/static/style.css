@@ -735,6 +735,14 @@
             padding: 8px 14px;
         }
 
+        .cards-help {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            color: var(--muted);
+            margin-bottom: 16px;
+        }
+
         @media (max-width: 900px) {
             .day-panels {
                 grid-template-columns: 1fr;
