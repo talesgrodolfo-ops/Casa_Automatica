@@ -46,6 +46,7 @@
 #define PIN_SERVO_PORTA_RFID 12
 #define ANGULO_PORTA_RFID_ABERTO 180
 #define ANGULO_PORTA_RFID_FECHADO 0
+#define PORTA_RFID_AUTO_FECHAR_MS 5000  // 0 desliga o auto-fechar
 
 #define ENABLE_SAIDA_AUX false
 

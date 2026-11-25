@@ -22,6 +22,9 @@
 #ifndef NTP_DAYLIGHT_OFFSET_SEC
 #define NTP_DAYLIGHT_OFFSET_SEC 0
 #endif
+#ifndef PORTA_RFID_AUTO_FECHAR_MS
+#define PORTA_RFID_AUTO_FECHAR_MS 5000
+#endif
 
 #ifndef ENABLE_SAIDA_AUX
 #define ENABLE_SAIDA_AUX false
@@ -92,6 +95,7 @@ bool portaRfidAberta = false;
 int anguloPortaRfidAtual = ANGULO_PORTA_RFID_FECHADO;
 bool portaRfidAnexada = false;
 bool portaoAnexado = false;
+unsigned long portaRfidAbrirEm = 0;
 
 WiFiClientSecure secureClient;
 bool httpsPronto = false;
@@ -816,10 +820,23 @@ void moverPortaRfid(bool aberta) {
   escreverAngulo(servoPortaRfid, angulo, anguloPortaRfidAtual);
   portaRfidAberta = aberta;
   if (aberta) {
+    portaRfidAbrirEm = millis();
     logFmt("porta rfid aberta (%d graus)", angulo);
   } else {
+    portaRfidAbrirEm = 0;
     logFmt("porta rfid fechada (%d graus)", angulo);
   }
+}
+
+void processarAutoFecharPortaRfid() {
+  if (!portaRfidAberta || PORTA_RFID_AUTO_FECHAR_MS == 0) {
+    return;
+  }
+  if (millis() - portaRfidAbrirEm < PORTA_RFID_AUTO_FECHAR_MS) {
+    return;
+  }
+  logLinha("rfid: auto-fechando porta");
+  moverPortaRfid(false);
 }
 
 bool postChuva(bool chovendo) {
@@ -942,7 +959,8 @@ bool sincronizarJanelasDaApi() {
 void abrirPortaPorRfid(const String& uid) {
   registrarEntradaPorta(uid);
   if (portaRfidAberta) {
-    logLinha("rfid: porta ja aberta");
+    portaRfidAbrirEm = millis();
+    logLinha("rfid: porta ja aberta, renovando auto-fechar");
     return;
   }
   logLinha("rfid: cartao lido, abrindo porta");
@@ -1243,6 +1261,7 @@ void loop() {
 
 #if ENABLE_RFID
   processarRfid();
+  processarAutoFecharPortaRfid();
 #endif
 
 #if ENABLE_LEDS_LUZES
