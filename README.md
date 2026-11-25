@@ -17,6 +17,8 @@ A **Casa Automática** é uma aplicação de automação residencial que control
 - Exibir se está chovendo (estado enviado pelo ESP32 via API)
 - Histórico de momentos de chuva (início e fim com data/hora)
 - Registro de entradas pela porta RFID (data/hora; fila offline no ESP)
+- Tela `/logs` com calendário: clique no dia para ver chuva e entradas daquele dia
+- Custom Skill Alexa para acender luzes, abrir/fechar janelas e portão
 - Painéis de estatísticas em tempo real
 - Notificações visuais (toast) para feedback de ações
 
@@ -206,6 +208,34 @@ Exemplo — `GET /api/chuva/momentos`:
   ]
 }
 ```
+
+### Logs por dia — `/api/logs`
+
+| Método | Rota                 | Descrição                                      |
+|--------|----------------------|------------------------------------------------|
+| GET    | `/api/logs/calendario?ano=&mes=` | Dias do mês com registros           |
+| GET    | `/api/logs/dia?data=YYYY-MM-DD`  | Chuva + entradas daquele dia        |
+
+Na interface: `/logs` (calendário) → clique no dia → `/logs?dia=YYYY-MM-DD`.
+
+### Alexa — `/api/alexa`
+
+| Método | Rota         | Descrição                                      |
+|--------|--------------|------------------------------------------------|
+| POST   | `/api/alexa` | Endpoint HTTPS da Custom Skill Alexa           |
+
+Configure no [Alexa Developer Console](https://developer.amazon.com/alexa/console/ask):
+
+1. Crie uma Custom Skill em português (BR) com invocation name `casa automática`.
+2. Cole o modelo de `alexa/interaction-model.pt-BR.json`.
+3. Default endpoint HTTPS: `https://lar-doce-lar.coresystemstgr.com/api/alexa` (ou o host do tunnel).
+4. Copie o Skill ID para `CASA_AUTOMATICA_ALEXA_SKILL_ID` / `casa-automatica.security.alexa-skill-id`.
+
+Exemplos de fala:
+
+- “Alexa, peça para a casa automática acender a luz da sala”
+- “Alexa, peça para a casa automática abrir as janelas”
+- “Alexa, peça para a casa automática abrir o portão”
 
 ### Porta RFID — `/api/porta/entradas`
 

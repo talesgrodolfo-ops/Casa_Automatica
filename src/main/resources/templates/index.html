@@ -11,7 +11,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" th:href="@{/style.css(v=9)}" />
+    <link rel="stylesheet" th:href="@{/style.css(v=10)}" />
 </head>
 
 <body>
@@ -21,6 +21,11 @@
             <div class="logo-icon"></div>
             <div class="logo-text">CASA<span>AUTOMÁTICA</span></div>
         </div>
+
+        <nav class="main-nav" aria-label="Navegação principal">
+            <a class="nav-link active" th:href="@{/}">Painel</a>
+            <a class="nav-link" th:href="@{/logs}">Logs</a>
+        </nav>
 
         <div class="header-right">
             <div class="status-badge">
@@ -48,26 +53,6 @@
                 <div class="exterior-slot" id="gate-slot">
                     <div class="loading">carregando portão...</div>
                 </div>
-            </div>
-        </section>
-
-        <section class="dashboard-section" id="section-rain-moments">
-            <div class="section-header">
-                <div class="section-title">Momentos de chuva</div>
-                <div class="section-count">Início <span>&amp; fim</span></div>
-            </div>
-            <div class="event-list" id="rain-moments-list">
-                <div class="loading">carregando momentos...</div>
-            </div>
-        </section>
-
-        <section class="dashboard-section" id="section-door-entries">
-            <div class="section-header">
-                <div class="section-title">Entradas pela porta</div>
-                <div class="section-count">RFID <span>com data/hora</span></div>
-            </div>
-            <div class="event-list" id="door-entries-list">
-                <div class="loading">carregando entradas...</div>
             </div>
         </section>
 
@@ -142,35 +127,18 @@
         const API_LIGHTS = '/api/quartos';
         const API_WINDOWS = '/api/janelas';
         const API_RAIN = '/api/chuva';
-        const API_RAIN_MOMENTS = '/api/chuva/momentos';
         const API_GATE = '/api/portao';
-        const API_DOOR_ENTRIES = '/api/porta/entradas';
 
         let rooms = [];
         let windows = [];
         let windowsBlocked = false;
         let rain = { rain: 'no', status: 'sem chuva' };
         let gate = { gate: 'entrada', state: 'closed', status: 'fechado' };
-        let rainMoments = [];
-        let doorEntries = [];
         let lastRoomsKey = '';
         let lastWindowsKey = '';
         let lastRainKey = '';
         let lastGateKey = '';
-        let lastRainMomentsKey = '';
-        let lastDoorEntriesKey = '';
         let windowsLoadSeq = 0;
-
-        function formatDateTime(value) {
-            if (!value) return '—';
-            const raw = String(value);
-            const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);
-            if (m) {
-                const sec = m[6] || '00';
-                return `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}:${sec}`;
-            }
-            return raw.replace('T', ' ');
-        }
 
         async function apiFetch(url, options = {}) {
             const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
@@ -240,81 +208,6 @@
                 document.getElementById('gate-slot').innerHTML =
                     '<div class="loading">erro ao conectar com o portão</div>';
             }
-        }
-
-        async function loadRainMoments() {
-            try {
-                const res = await apiFetch(API_RAIN_MOMENTS);
-                const data = await res.json();
-                const list = Array.isArray(data.moments) ? data.moments : [];
-                const key = JSON.stringify(list);
-                if (key === lastRainMomentsKey) return;
-                lastRainMomentsKey = key;
-                rainMoments = list;
-                renderRainMoments();
-            } catch {
-                lastRainMomentsKey = '';
-                document.getElementById('rain-moments-list').innerHTML =
-                    '<div class="loading">erro ao carregar momentos de chuva</div>';
-            }
-        }
-
-        async function loadDoorEntries() {
-            try {
-                const res = await apiFetch(API_DOOR_ENTRIES);
-                const data = await res.json();
-                const list = Array.isArray(data.entries) ? data.entries : [];
-                const key = JSON.stringify(list);
-                if (key === lastDoorEntriesKey) return;
-                lastDoorEntriesKey = key;
-                doorEntries = list;
-                renderDoorEntries();
-            } catch {
-                lastDoorEntriesKey = '';
-                document.getElementById('door-entries-list').innerHTML =
-                    '<div class="loading">erro ao carregar entradas da porta</div>';
-            }
-        }
-
-        function renderRainMoments() {
-            const list = document.getElementById('rain-moments-list');
-            if (!rainMoments.length) {
-                list.innerHTML = '<div class="loading">nenhum momento de chuva registrado</div>';
-                return;
-            }
-            list.innerHTML = rainMoments.map(m => {
-                const ongoing = m.emAndamento || !m.fim;
-                return `
-                    <article class="event-row ${ongoing ? 'ongoing' : ''}">
-                        <div class="event-main">
-                            <div class="event-title">${ongoing ? 'Chuva em andamento' : 'Chuva registrada'}</div>
-                            <div class="event-meta">
-                                <span>Início: ${formatDateTime(m.inicio)}</span>
-                                <span>Fim: ${ongoing ? 'ainda chovendo' : formatDateTime(m.fim)}</span>
-                            </div>
-                        </div>
-                        <div class="event-badge">${ongoing ? 'AGORA' : 'ENCERRADO'}</div>
-                    </article>`;
-            }).join('');
-        }
-
-        function renderDoorEntries() {
-            const list = document.getElementById('door-entries-list');
-            if (!doorEntries.length) {
-                list.innerHTML = '<div class="loading">nenhuma entrada pela porta ainda</div>';
-                return;
-            }
-            list.innerHTML = doorEntries.map(e => `
-                <article class="event-row ${e.offline ? 'offline' : ''}">
-                    <div class="event-main">
-                        <div class="event-title">Cartão ${e.cardUid || '—'}</div>
-                        <div class="event-meta">
-                            <span>Ocorrido: ${formatDateTime(e.ocorridoEm)}</span>
-                            <span>Sync: ${formatDateTime(e.sincronizadoEm)}</span>
-                        </div>
-                    </div>
-                    <div class="event-badge">${e.offline ? 'OFFLINE' : 'ONLINE'}</div>
-                </article>`).join('');
         }
 
         function renderRain() {
@@ -618,8 +511,6 @@
             lastWindowsKey = '';
             lastRainKey = '';
             lastGateKey = '';
-            lastRainMomentsKey = '';
-            lastDoorEntriesKey = '';
         }
 
         async function apiErrorMessage(res) {
@@ -740,25 +631,12 @@
         }
 
         async function refreshAll() {
-            await Promise.all([
-                loadRooms(),
-                loadWindows(),
-                loadRain(),
-                loadGate(),
-                loadRainMoments(),
-                loadDoorEntries()
-            ]);
+            await Promise.all([loadRooms(), loadWindows(), loadRain(), loadGate()]);
         }
 
         refreshAll();
         setInterval(loadRain, 5000);
-        setInterval(() => {
-            loadRooms();
-            loadWindows();
-            loadGate();
-            loadRainMoments();
-            loadDoorEntries();
-        }, 15000);
+        setInterval(() => { loadRooms(); loadWindows(); loadGate(); }, 15000);
     </script>
 </body>
 
